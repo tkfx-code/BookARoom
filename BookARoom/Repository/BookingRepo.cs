@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using BookARoom.Interfaces;
 using BookARoom.Models;
+using BookARoom.Data;
+using BookARoom.Interfaces;
 
 namespace BookARoom.Repository
 {
@@ -14,13 +16,15 @@ namespace BookARoom.Repository
         {
             throw new NotImplementedException();
         }
-
         public Task<bool> IsOverlapAsync(Booking booking)
         {
             throw new NotImplementedException();
         }
-
         public Task<Booking> PostBooking(Booking booking)
+        {
+            throw new NotImplementedException();
+        }
+        public Task<IEnumerable<Booking>> GetAllBookingsRoom(int roomId, DateTime startTime, DateTime endTime)
         {
             throw new NotImplementedException();
         }

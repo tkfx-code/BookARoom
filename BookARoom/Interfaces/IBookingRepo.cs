@@ -9,10 +9,9 @@ namespace BookARoom.Interfaces
 {
     public interface IBookingRepo
     {
-        Task<bool> IsOverlapAsync(Booking booking);
-        Task<Booking> PostBooking(Booking booking);
-        //Overlap
-        //availability
-        //
+        public Task<IEnumerable<Booking>> GetAllBookingsRoom(int roomId, DateTime startTime, DateTime endTime);
+        public Task<bool> IsOverlapAsync(Booking booking);
+        public Task<Booking> PostBooking(Booking booking);
+
     }
 }

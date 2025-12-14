@@ -1,10 +1,12 @@
 ﻿using BookARoom.Models;
 using BookARoom.Interfaces;
+using BookARoom.Repository;
+using System;
 
 
 namespace BookARoom.Services
 {
-    public class BookingService : IBookingRepo
+    public class BookingService : IBookingService
     {
         private readonly IBookingRepo _bookingRepo;
 
@@ -26,14 +28,14 @@ namespace BookARoom.Services
             return savedBooking;
         }
 
-        public Task<bool> IsOverlapAsync(Booking booking)
+        public async Task<bool> IsAvailable(int roomId, DateTime startTime, DateTime endTime)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<Booking> PostBooking(Booking booking)
-        {
-            throw new NotImplementedException();
+            var overlapBooking = await _bookingRepo.GetAllBookingsRoom(
+                roomId,
+                startTime,
+                endTime
+            );
+            return !overlapBooking.Any();
         }
     }
 }

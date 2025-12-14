@@ -32,7 +32,12 @@ namespace BookARoom.Repository
             await _context.SaveChangesAsync();
             return booking;
         }
-        
+
+        public Task<IEnumerable<Booking>> GetAllBookingsRoom(int roomId, DateTime startTime, DateTime endTime)
+        {
+            throw new NotImplementedException();
+        }
+
         //public async Task methods
         //return await context.Booking.ToListAsync
     }

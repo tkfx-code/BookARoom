@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,22 +27,19 @@ namespace Test.BookARoom
                 return Task.FromResult(booking);
             }
 
+            public Task<IEnumerable<Booking>> GetAllBookingsRoom(int roomId, DateTime start, DateTime end)
+            {
+                return Task.FromResult<IEnumerable<Booking>>(BookingsPosted.Where(b =>
+                    b.RoomId == roomId &&
+                    b.StartTime < end &&
+                    b.EndTime > start));
+            }
+
             public Task<bool> IsOverlapAsync(Booking booking)
             {
                 return OverlapFunc(booking);
             }
-
-            public Task<Booking?> CreateBooking(Booking booking)
-            {
-                throw new NotImplementedException();
-            }
         }
-
-        public Task<bool> IsOverlapAsync(Booking booking)
-        {
-            return Task.FromResult(false);
-        }
-        //more methods from IBookingRepo when needed
 
         //Here goes fact methods
         [Fact]
@@ -70,7 +68,7 @@ namespace Test.BookARoom
         [Fact]
         public async Task CreateBooking_Overlap_ShouldReturnNull()
         {
-            //Arramge
+            //Arrange
             var fakeRepo = new FakeBookingRepo();
             var service = new BookingService(fakeRepo);
 
@@ -88,6 +86,36 @@ namespace Test.BookARoom
             //Assert
             Assert.Null(result);
             Assert.Empty(fakeRepo.BookingsPosted);
+        }
+
+        [Fact]
+        public async Task IsAvailable_ShouldReturnFalse()
+        {
+            //Arrange
+            var fakeRepo = new FakeBookingRepo();
+            var service = new BookingService(fakeRepo);
+
+            var occupied = new Booking
+            {
+                RoomId = 101,
+                UserName = "Alice",
+                StartTime = new DateTime(2025, 12, 30, 10, 0, 0),
+                EndTime = new DateTime(2025, 12, 30, 12, 0, 0)
+            };
+            fakeRepo.BookingsPosted.Add(occupied);
+
+            var searchRoom = new Room { 
+                RoomId = 101,
+                RoomName = "Conference Room"
+            };
+            var searchStart = new DateTime(2025, 12, 30, 10, 30, 0);
+            var searchEnd = new DateTime(2025, 12, 30, 12, 30, 0);
+
+            //Act
+            var isAvailable = await service.IsAvailable(searchRoom.RoomId, searchStart, searchEnd);
+
+            //Assert
+           Assert.False(isAvailable);
         }
     }
 }

@@ -20,7 +20,7 @@ namespace BookingWebApplicationAPI
             );
 
             //Add DI
-            builder.Services.AddScoped<IBookingRepo, BookingService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
             builder.Services.AddScoped<IBookingRepo, BookingRepo>();
 
             builder.Services.AddControllers();

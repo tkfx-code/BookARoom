@@ -44,5 +44,14 @@ namespace BookARoom.Repository
 
             return bookings;
         }
+        public async Task<IEnumerable<Booking>> GetAllActiveBookings(int roomId, DateTime currentTime)
+        {
+            var activeBookings = await _context.Bookings
+                .Where(b =>
+                b.RoomId == roomId &&
+                b.EndTime > currentTime)
+                .ToListAsync();
+            return activeBookings;
+        }
     }
 }

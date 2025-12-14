@@ -2,6 +2,7 @@
 using BookARoom.Models;
 using BookARoom.Repository;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Test.BookARoom
 {
@@ -26,12 +27,12 @@ namespace Test.BookARoom
             var repo = new BookingRepo(context);
 
             //Act
-            var newBooking = new Booking 
-            { 
-                RoomId = 1, 
+            var newBooking = new Booking
+            {
+                RoomId = 1,
                 UserName = "TestUser",
-                StartTime = DateTime.Now, 
-                EndTime = DateTime.Now.AddHours(1) 
+                StartTime = DateTime.Now,
+                EndTime = DateTime.Now.AddHours(1)
             };
             await repo.PostBooking(newBooking);
 
@@ -78,6 +79,50 @@ namespace Test.BookARoom
             //Assert 
             Assert.Equal(2, overlappingBooking.Count());
             Assert.Equal("First User", overlappingBooking.First().UserName);
+        }
+        [Fact]
+        public async Task GetAllActiveBookings_ShouldReturnOngoingAndFuture()
+        {
+            //Arrange
+            using var context = InMemoryDbContext();
+            var repo = new BookingRepo(context);
+            var now = new DateTime(2025, 12, 10, 10, 0, 0);
+
+            var ongoing = new Booking
+            {
+                RoomId = 202,
+                UserName = "Ongoing",
+                StartTime = now.AddHours(-1),
+                EndTime = now.AddHours(1)
+            };
+
+            var future = new Booking
+            {
+                RoomId = 202,
+                UserName = "Future",
+                StartTime = now.AddDays(1),
+                EndTime = now.AddDays(1).AddHours(1)
+            };
+
+            var past = new Booking
+            {
+                RoomId = 202,
+                UserName = "Past",
+                StartTime = now.AddDays(-2),
+                EndTime = now.AddDays(-2).AddHours(1)
+            };
+
+            context.Bookings.AddRange(ongoing, future, past);
+            await context.SaveChangesAsync();
+
+            //Act
+            var activeBookings = await repo.GetAllActiveBookings(202, now);
+
+            //Assert
+            var activeBookingsList = ((IEnumerable<Booking>)activeBookings).ToList();
+            Assert.Equal(2, activeBookingsList.Count);
+            Assert.Contains(activeBookingsList, b => b.UserName == "Ongoing");
+            Assert.Contains(activeBookingsList, b => b.UserName == "Future");
         }
     }
 }

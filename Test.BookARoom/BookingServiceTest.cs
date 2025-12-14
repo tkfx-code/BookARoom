@@ -39,6 +39,11 @@ namespace Test.BookARoom
             {
                 return OverlapFunc(booking);
             }
+
+            public Task<IEnumerable<Booking>> GetAllActiveBookings(int roomId, DateTime currentTime)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         //Here goes fact methods

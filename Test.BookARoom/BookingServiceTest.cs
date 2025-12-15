@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,11 +12,16 @@ namespace Test.BookARoom
 {
     public class BookingServiceTest
     {
+        //Fake Repository for testing
         private class FakeBookingRepo : IBookingRepo
         {
             public List<Booking> BookingsPosted { get; } = new List<Booking>();
+
             public Func<Booking, Task<bool>> OverlapFunc { get; set; } =
                 (b) => Task.FromResult(false);
+            public Func<int, Task<Booking?>> DeleteFunc { get; set; } =
+                (id) => Task.FromResult<Booking?>(null);
+
             public Task<Booking> PostBooking(Booking booking)
             {
                 BookingsPosted.Add(booking);
@@ -26,22 +32,42 @@ namespace Test.BookARoom
                 return Task.FromResult(booking);
             }
 
+            public Task<IEnumerable<Booking>> GetAllBookingsRoom(int roomId, DateTime start, DateTime end)
+            {
+                return Task.FromResult<IEnumerable<Booking>>(BookingsPosted.Where(b =>
+                    b.RoomId == roomId &&
+                    b.StartTime < end &&
+                    b.EndTime > start));
+            }
+
             public Task<bool> IsOverlapAsync(Booking booking)
             {
                 return OverlapFunc(booking);
             }
 
-            public Task<Booking?> CreateBooking(Booking booking)
+            public Task<IEnumerable<Booking>> GetAllActiveBookings(int roomId, DateTime currentTime)
             {
                 throw new NotImplementedException();
             }
-        }
 
-        public Task<bool> IsOverlapAsync(Booking booking)
-        {
-            return Task.FromResult(false);
+            public Task<Booking?> DeleteBooking(int bookingId)
+            {
+                var removeBooking = BookingsPosted.FirstOrDefault(b => b.BookingId == bookingId);
+                if (removeBooking != null)
+                {
+                    BookingsPosted.Remove(removeBooking);
+                }
+                return DeleteFunc(bookingId);
+            }
         }
-        //more methods from IBookingRepo when needed
+        //Fake User Service for testing to keep user safe
+        private class FakeUserService : IUserService
+        {
+            public string GetCurrentUser()
+            {
+                return "fake.user@bookaroom.com";
+            }
+        }
 
         //Here goes fact methods
         [Fact]
@@ -49,7 +75,8 @@ namespace Test.BookARoom
         {
             //Arrange
             var fakeRepo = new FakeBookingRepo();
-            var service = new BookingService(fakeRepo);
+            var fakeUserService = new FakeUserService();
+            var service = new BookingService(fakeRepo, fakeUserService);
             var newBooking = new Booking
             {
                 RoomId = 1,
@@ -65,14 +92,16 @@ namespace Test.BookARoom
             Assert.Single(fakeRepo.BookingsPosted);
             Assert.NotNull(result);
             Assert.Equal(newBooking.RoomId, result.RoomId);
+            Assert.Equal(fakeUserService.GetCurrentUser(), result.UserName);
         }
 
         [Fact]
         public async Task CreateBooking_Overlap_ShouldReturnNull()
         {
-            //Arramge
+            //Arrange
             var fakeRepo = new FakeBookingRepo();
-            var service = new BookingService(fakeRepo);
+            var fakeUserService = new FakeUserService();
+            var service = new BookingService(fakeRepo, fakeUserService);
 
             fakeRepo.OverlapFunc = (b) => Task.FromResult(true);
 
@@ -87,6 +116,63 @@ namespace Test.BookARoom
 
             //Assert
             Assert.Null(result);
+            Assert.Empty(fakeRepo.BookingsPosted);
+        }
+
+        [Fact]
+        public async Task IsAvailable_ShouldReturnFalse()
+        {
+            //Arrange
+            var fakeRepo = new FakeBookingRepo();
+            var fakeUserService = new FakeUserService();
+            var service = new BookingService(fakeRepo, fakeUserService);
+
+            var occupied = new Booking
+            {
+                RoomId = 101,
+                UserName = "Alice",
+                StartTime = new DateTime(2025, 12, 30, 10, 0, 0),
+                EndTime = new DateTime(2025, 12, 30, 12, 0, 0)
+            };
+            fakeRepo.BookingsPosted.Add(occupied);
+
+            var searchRoom = new Room { 
+                RoomId = 101,
+                RoomName = "Conference Room"
+            };
+            var searchStart = new DateTime(2025, 12, 30, 10, 30, 0);
+            var searchEnd = new DateTime(2025, 12, 30, 12, 30, 0);
+
+            //Act
+            var isAvailable = await service.IsAvailable(searchRoom.RoomId, searchStart, searchEnd);
+
+            //Assert
+           Assert.False(isAvailable);
+        }
+
+        [Fact]
+        public async Task DeleteBooking_ShouldCallRepoAndReturnTrue()
+        {
+            //Arrange
+            var fakeRepo = new FakeBookingRepo();
+            var fakeUserService = new FakeUserService();
+            var service = new BookingService(fakeRepo, fakeUserService);
+            var bookingToDelete = new Booking
+            {
+                BookingId = 1,
+                RoomId = 1,
+                UserName = "Bob",
+                StartTime = DateTime.Now,
+                EndTime = DateTime.Now.AddHours(1)
+            };
+            fakeRepo.BookingsPosted.Add(bookingToDelete);
+            fakeRepo.DeleteFunc = (id) => Task.FromResult(bookingToDelete);
+
+            //Act
+            var result = await service.DeleteBooking(bookingToDelete.BookingId);
+
+            //Assert
+            Assert.True(result);
             Assert.Empty(fakeRepo.BookingsPosted);
         }
     }

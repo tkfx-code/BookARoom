@@ -1,20 +1,27 @@
 ﻿using BookARoom.Models;
 using BookARoom.Interfaces;
+using BookARoom.Repository;
+using System;
 
 
 namespace BookARoom.Services
 {
-    public class BookingService : IBookingRepo
+    public class BookingService : IBookingService
     {
         private readonly IBookingRepo _bookingRepo;
+        private readonly IUserService _userService;
 
-        public BookingService(IBookingRepo bookingRepo)
+        public BookingService(IBookingRepo bookingRepo, IUserService userService)
         {
             _bookingRepo = bookingRepo;
+            _userService = userService;
         }
 
         public async Task<Booking?> CreateBooking(Booking booking)
         {
+            //GetUserId currently hard coded for mocked testing
+            booking.UserName = _userService.GetCurrentUser();
+
             bool isOverlapping = await _bookingRepo.IsOverlapAsync(booking);
 
             if (isOverlapping)
@@ -26,14 +33,20 @@ namespace BookARoom.Services
             return savedBooking;
         }
 
-        public Task<bool> IsOverlapAsync(Booking booking)
+        public async Task<bool> DeleteBooking(int bookingId)
         {
-            throw new NotImplementedException();
+            var deleted = await _bookingRepo.DeleteBooking(bookingId);
+            return deleted != null;
         }
 
-        public Task<Booking> PostBooking(Booking booking)
+        public async Task<bool> IsAvailable(int roomId, DateTime startTime, DateTime endTime)
         {
-            throw new NotImplementedException();
+            var overlapBooking = await _bookingRepo.GetAllBookingsRoom(
+                roomId,
+                startTime,
+                endTime
+            );
+            return !overlapBooking.Any();
         }
     }
 }

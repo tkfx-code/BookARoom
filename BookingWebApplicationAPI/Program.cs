@@ -13,15 +13,20 @@ namespace BookingWebApplicationAPI
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
+                throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
             // Add services to the container.
+            //Make sure it points to the correct Migration assembly in BookARoom Class Library
             builder.Services.AddDbContext<BookingDbContext>(options =>
-            options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
+            options.UseSqlServer(connectionString, b => b.MigrationsAssembly("BookARoom"))
             );
 
             //Add DI
-            builder.Services.AddScoped<IBookingRepo, BookingService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
             builder.Services.AddScoped<IBookingRepo, BookingRepo>();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IRoomRepo, RoomRepo>();
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();

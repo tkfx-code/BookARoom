@@ -12,6 +12,7 @@ namespace Test.BookARoom
 {
     public class BookingServiceTest
     {
+        //Fake Repository for testing
         private class FakeBookingRepo : IBookingRepo
         {
             public List<Booking> BookingsPosted { get; } = new List<Booking>();
@@ -45,6 +46,14 @@ namespace Test.BookARoom
                 throw new NotImplementedException();
             }
         }
+        //Fake User Service for testing to keep user safe
+        private class FakeUserService : IUserService
+        {
+            public string GetCurrentUser()
+            {
+                return "fake.user@bookaroom.com";
+            }
+        }
 
         //Here goes fact methods
         [Fact]
@@ -52,7 +61,8 @@ namespace Test.BookARoom
         {
             //Arrange
             var fakeRepo = new FakeBookingRepo();
-            var service = new BookingService(fakeRepo);
+            var fakeUserService = new FakeUserService();
+            var service = new BookingService(fakeRepo, fakeUserService);
             var newBooking = new Booking
             {
                 RoomId = 1,
@@ -68,6 +78,7 @@ namespace Test.BookARoom
             Assert.Single(fakeRepo.BookingsPosted);
             Assert.NotNull(result);
             Assert.Equal(newBooking.RoomId, result.RoomId);
+            Assert.Equal(fakeUserService.GetCurrentUser(), result.UserName);
         }
 
         [Fact]
@@ -75,7 +86,8 @@ namespace Test.BookARoom
         {
             //Arrange
             var fakeRepo = new FakeBookingRepo();
-            var service = new BookingService(fakeRepo);
+            var fakeUserService = new FakeUserService();
+            var service = new BookingService(fakeRepo, fakeUserService);
 
             fakeRepo.OverlapFunc = (b) => Task.FromResult(true);
 
@@ -98,7 +110,8 @@ namespace Test.BookARoom
         {
             //Arrange
             var fakeRepo = new FakeBookingRepo();
-            var service = new BookingService(fakeRepo);
+            var fakeUserService = new FakeUserService();
+            var service = new BookingService(fakeRepo, fakeUserService);
 
             var occupied = new Booking
             {

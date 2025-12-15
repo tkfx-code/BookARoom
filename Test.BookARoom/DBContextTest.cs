@@ -21,6 +21,7 @@ namespace Test.BookARoom
             var dbContext = new BookingDbContext(options);
             dbContext.Database.EnsureDeleted();
             dbContext.Database.EnsureCreated();
+            
             return dbContext;
         }
         [Fact]
@@ -30,10 +31,18 @@ namespace Test.BookARoom
             using var context = RealDbContext();
             var repo = new BookingRepo(context);
 
+            //Data Seed
+            var room = new Room
+            {
+                RoomName = "Integration Test Room",
+            };
+            context.Rooms.Add(room);
+            await context.SaveChangesAsync();
+
             var expected = new Booking
             {
-                RoomId = 999,
-                UserName = "Integration test",
+                RoomId = room.RoomId,
+                UserName = "Integration tester",
                 StartTime = DateTime.Now,
                 EndTime = DateTime.Now.AddHours(2)
             };

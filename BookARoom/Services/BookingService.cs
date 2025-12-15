@@ -20,7 +20,7 @@ namespace BookARoom.Services
         public async Task<Booking?> CreateBooking(Booking booking)
         {
             //GetUserId currently hard coded for mocked testing
-            booking.UserName = _userService.GetUserId();
+            booking.UserName = _userService.GetCurrentUser();
 
             bool isOverlapping = await _bookingRepo.IsOverlapAsync(booking);
 

@@ -16,8 +16,12 @@ namespace Test.BookARoom
         private class FakeBookingRepo : IBookingRepo
         {
             public List<Booking> BookingsPosted { get; } = new List<Booking>();
+
             public Func<Booking, Task<bool>> OverlapFunc { get; set; } =
                 (b) => Task.FromResult(false);
+            public Func<int, Task<Booking?>> DeleteFunc { get; set; } =
+                (id) => Task.FromResult<Booking?>(null);
+
             public Task<Booking> PostBooking(Booking booking)
             {
                 BookingsPosted.Add(booking);
@@ -44,6 +48,16 @@ namespace Test.BookARoom
             public Task<IEnumerable<Booking>> GetAllActiveBookings(int roomId, DateTime currentTime)
             {
                 throw new NotImplementedException();
+            }
+
+            public Task<Booking?> DeleteBooking(int bookingId)
+            {
+                var removeBooking = BookingsPosted.FirstOrDefault(b => b.BookingId == bookingId);
+                if (removeBooking != null)
+                {
+                    BookingsPosted.Remove(removeBooking);
+                }
+                return DeleteFunc(bookingId);
             }
         }
         //Fake User Service for testing to keep user safe
@@ -134,6 +148,32 @@ namespace Test.BookARoom
 
             //Assert
            Assert.False(isAvailable);
+        }
+
+        [Fact]
+        public async Task DeleteBooking_ShouldCallRepoAndReturnTrue()
+        {
+            //Arrange
+            var fakeRepo = new FakeBookingRepo();
+            var fakeUserService = new FakeUserService();
+            var service = new BookingService(fakeRepo, fakeUserService);
+            var bookingToDelete = new Booking
+            {
+                BookingId = 1,
+                RoomId = 1,
+                UserName = "Bob",
+                StartTime = DateTime.Now,
+                EndTime = DateTime.Now.AddHours(1)
+            };
+            fakeRepo.BookingsPosted.Add(bookingToDelete);
+            fakeRepo.DeleteFunc = (id) => Task.FromResult(bookingToDelete);
+
+            //Act
+            var result = await service.DeleteBooking(bookingToDelete.BookingId);
+
+            //Assert
+            Assert.True(result);
+            Assert.Empty(fakeRepo.BookingsPosted);
         }
     }
 }

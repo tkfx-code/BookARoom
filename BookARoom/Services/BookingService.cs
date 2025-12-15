@@ -33,6 +33,12 @@ namespace BookARoom.Services
             return savedBooking;
         }
 
+        public async Task<bool> DeleteBooking(int bookingId)
+        {
+            var deleted = await _bookingRepo.DeleteBooking(bookingId);
+            return deleted != null;
+        }
+
         public async Task<bool> IsAvailable(int roomId, DateTime startTime, DateTime endTime)
         {
             var overlapBooking = await _bookingRepo.GetAllBookingsRoom(

@@ -13,5 +13,6 @@ namespace BookARoom.Interfaces
         public Task<bool> IsOverlapAsync(Booking booking);
         public Task<Booking> PostBooking(Booking booking);
         public Task<IEnumerable<Booking>> GetAllActiveBookings(int roomId, DateTime currentTime);
+        public Task<Booking?> DeleteBooking(int bookingId);
     }
 }

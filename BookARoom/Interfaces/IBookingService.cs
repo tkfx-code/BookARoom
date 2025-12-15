@@ -11,5 +11,6 @@ namespace BookARoom.Interfaces
     {
         Task<Booking?> CreateBooking(Booking booking);
         Task<bool> IsAvailable(int roomId, DateTime startTime, DateTime endTime); 
+        Task<bool> DeleteBooking(int bookingId);
     }
 }

@@ -26,6 +26,7 @@ namespace BookingWebApplicationAPI
             builder.Services.AddScoped<IBookingService, BookingService>();
             builder.Services.AddScoped<IBookingRepo, BookingRepo>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IRoomRepo, RoomRepo>();
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();

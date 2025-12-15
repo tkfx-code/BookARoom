@@ -53,5 +53,20 @@ namespace BookARoom.Repository
                 .ToListAsync();
             return activeBookings;
         }
+
+        public async Task<Booking?> DeleteBooking(int bookingId)
+        {
+            var booking = await _context.Bookings.FindAsync(bookingId);
+
+            if (booking == null)
+            {
+                return null;
+            }
+
+            _context.Bookings.Remove(booking);
+            await _context.SaveChangesAsync();
+
+            return booking;
+        }
     }
 }

@@ -56,5 +56,43 @@ namespace Test.BookARoom
             Assert.Equal(expected.RoomId, actualBooking.RoomId);
             Assert.Equal(expected.UserName, actualBooking.UserName);
         }
+
+        [Fact]
+        public async Task DeleteBooking_RealDB_ShouldRemoveBookingAndReturn()
+        {
+            using var context = RealDbContext();
+            var repo = new BookingRepo(context);
+
+            var room = new Room
+            {
+                RoomName = "Integration Test Room To Delete",
+            };
+            context.Rooms.Add(room);
+            await context.SaveChangesAsync();
+
+            var bookingTodelete = new Booking
+            {
+                RoomId = room.RoomId,
+                UserName = "Integration tester",
+                StartTime = DateTime.Now,
+                EndTime = DateTime.Now.AddHours(2)
+            };
+            context.Bookings.Add(bookingTodelete);
+            await context.SaveChangesAsync();
+
+            var bookingId = bookingTodelete.BookingId;
+            
+            //Act
+            var deletedBooking = await repo.DeleteBooking(bookingId);
+
+            //Assert
+            Assert.NotNull(deletedBooking);
+            Assert.Equal(bookingId, deletedBooking.BookingId);
+            
+            var actualBooking = await context.Bookings.FindAsync(bookingId);
+            Assert.Null(actualBooking);
+            var nullDelete = await repo.DeleteBooking(bookingId);
+            Assert.Null(nullDelete);
+        }
     }
 }

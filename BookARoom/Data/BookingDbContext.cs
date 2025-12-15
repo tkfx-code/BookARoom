@@ -10,15 +10,20 @@ namespace BookARoom.Data
 {
     public class BookingDbContext : DbContext
     {
-        public DbSet<Booking> Bookings { get; set; }
 
         public BookingDbContext(DbContextOptions<BookingDbContext> options) : base(options)
         {
             
         }
+
+        public DbSet<Booking> Bookings { get; set; }
+        public DbSet<Room> Rooms { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Booking>()
+                .HasOne<Room>()
+                .WithMany()
+                .HasForeignKey(b => b.RoomId);
         }
     }
 }

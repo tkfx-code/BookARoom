@@ -9,14 +9,19 @@ namespace BookARoom.Services
     public class BookingService : IBookingService
     {
         private readonly IBookingRepo _bookingRepo;
+        private readonly IUserService _userService;
 
-        public BookingService(IBookingRepo bookingRepo)
+        public BookingService(IBookingRepo bookingRepo, IUserService userService)
         {
             _bookingRepo = bookingRepo;
+            _userService = userService;
         }
 
         public async Task<Booking?> CreateBooking(Booking booking)
         {
+            //GetUserId currently hard coded for mocked testing
+            booking.UserName = _userService.GetUserId();
+
             bool isOverlapping = await _bookingRepo.IsOverlapAsync(booking);
 
             if (isOverlapping)
